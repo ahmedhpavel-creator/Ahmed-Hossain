@@ -1,20 +1,20 @@
 import { ORGANIZATION_INFO } from "../constants";
 import { storage } from "./storage";
 import { Event } from "../types";
-import type { GoogleGenAI as GoogleGenAIType, Content } from "@google/genai";
 
 // Lazy initialization holder
 let aiClient: any | null = null;
 
 const getApiKey = () => {
   try {
-    if (typeof process !== 'undefined' && process.env) {
-      return process.env.API_KEY || "";
-    }
+    // In Vite production build, process.env.API_KEY is replaced with the actual string value.
+    // We access it directly, bypassing strict 'typeof process' checks that fail in browser.
+    // @ts-ignore
+    return process.env.API_KEY || "";
   } catch (e) {
-    console.warn("Unable to access process.env.API_KEY");
+    console.warn("Unable to access API_KEY");
+    return "";
   }
-  return "";
 };
 
 const getAiClient = async () => {
@@ -72,6 +72,7 @@ export const generateChatResponse = async (userMessage: string, history: {role: 
     `;
 
     // 3. Prepare Contents with History
+    // Gemini SDK expects roles to be 'user' or 'model'.
     const contents: any[] = history.map(msg => ({
       role: msg.role,
       parts: [{ text: msg.text }]
