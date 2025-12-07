@@ -1,15 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ORGANIZATION_INFO, TRANSLATIONS, CALLIGRAPHY_URL } from '../constants';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Users, HeartHandshake, ChevronRight, FileText, X, Send, MapPin, Phone, User, MessageSquare } from 'lucide-react';
 import { storage } from '../services/storage';
+import { Event, Leader } from '../types';
 
 const Home: React.FC = () => {
   const { lang } = useLanguage();
-  const events = storage.getEvents().slice(0, 3);
-  // Fetch leaders from storage and sort by order
-  const leaders = storage.getLeaders().sort((a, b) => a.order - b.order).slice(0, 3);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const eventsData = await storage.getEvents();
+            if(Array.isArray(eventsData)) {
+                 setEvents(eventsData.slice(0, 3));
+            }
+            
+            const leadersData = await storage.getLeaders();
+            if (Array.isArray(leadersData)) {
+                setLeaders(leadersData.sort((a, b) => a.order - b.order).slice(0, 3));
+            }
+        } catch(e) {
+            console.error("Failed to load home data", e);
+        }
+    };
+    fetchData();
+  }, []);
 
   // Application Form State
   const [isAppFormOpen, setIsAppFormOpen] = useState(false);
@@ -20,11 +39,12 @@ const Home: React.FC = () => {
     message: ''
   });
 
-  const handleAppSubmit = (e: React.FormEvent) => {
+  const handleAppSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Get Admin Phone
-    const adminPhone = storage.getAppSettings().contactPhone;
+    const settings = await storage.getAppSettings();
+    const adminPhone = settings.contactPhone;
     
     // Format Message
     const title = "New Application / Complaint Submission";
@@ -123,17 +143,17 @@ const Home: React.FC = () => {
               <div key={leader.id} className="group bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 flex items-center gap-5 shadow-sm hover:shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:-translate-y-1">
                 <div className="relative w-20 h-20 shrink-0">
                   <div className="absolute inset-0 bg-brand-200 dark:bg-brand-900 rounded-full blur opacity-0 group-hover:opacity-50 transition-opacity"></div>
-                  <img src={leader.image} alt={leader.name[lang]} className="relative w-full h-full rounded-full object-cover border-2 border-white dark:border-gray-600 shadow-md group-hover:scale-105 transition-transform duration-300" />
+                  <img src={leader.image} alt={leader.name?.[lang] || ''} className="relative w-full h-full rounded-full object-cover border-2 border-white dark:border-gray-600 shadow-md group-hover:scale-105 transition-transform duration-300" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {leader.name[lang]}
+                    {leader.name?.[lang] || 'Unknown'}
                   </h3>
                   <p className="text-brand-600 dark:text-brand-400 text-sm font-medium mb-1">
-                    {leader.designation[lang]}
+                    {leader.designation?.[lang] || ''}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 italic">
-                    "{leader.message[lang]}"
+                    "{leader.message?.[lang] || ''}"
                   </p>
                 </div>
               </div>
@@ -163,17 +183,17 @@ const Home: React.FC = () => {
               <div key={event.id} className="group bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 dark:border-gray-800">
                 <div className="h-48 overflow-hidden relative">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity"></div>
-                  <img src={event.image} alt={event.title[lang]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <img src={event.image} alt={event.title?.[lang] || ''} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute top-4 left-4 z-20 bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-900 dark:text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm">
                     <Calendar size={12} className="text-brand-600" /> {event.date}
                   </div>
                 </div>
                 <div className="p-6">
                   <h3 className="font-bold text-xl mb-3 text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {event.title[lang]}
+                    {event.title?.[lang] || 'Untitled Event'}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed">
-                    {event.description[lang]}
+                    {event.description?.[lang] || ''}
                   </p>
                   <Link to="/events" className="inline-block mt-4 text-sm font-semibold text-brand-600 hover:text-brand-700 underline decoration-transparent hover:decoration-brand-600 transition-all">
                      {lang === 'en' ? 'Read More' : 'আরও পড়ুন'}

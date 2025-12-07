@@ -31,15 +31,16 @@ const getAiClient = async () => {
  * Generates a response for the Chatbot using Gemini 2.5 Flash.
  * It injects organization context into the system instruction and maintains chat history.
  */
-export const generateChatResponse = async (userMessage: string, history: {role: string, text: string}[]) => {
+export const generateChatResponse = async (userMessage: string, history: {id?: string, role: string, text: string}[]) => {
   try {
-    // 1. Gather Context
-    const settings = storage.getAppSettings(); // Get dynamic phone
+    // 1. Gather Context (Async now)
+    const settings = await storage.getAppSettings(); 
     const contactPhone = settings.contactPhone;
     
-    const leaders = storage.getLeaders();
+    const leaders = await storage.getLeaders();
     const leaderNames = leaders.map(l => `${l.name.en} (${l.designation.en})`).join(', ');
-    const events = storage.getEvents();
+    
+    const events = await storage.getEvents();
     const eventList = events.slice(0, 3).map(e => `${e.title.en} on ${e.date}`).join('; ');
     
     const contactInfoFull = `Phone: ${contactPhone}, Email: ${ORGANIZATION_INFO.contact.email}, Address: ${ORGANIZATION_INFO.address}`;
@@ -72,23 +73,33 @@ export const generateChatResponse = async (userMessage: string, history: {role: 
     `;
 
     // 3. Prepare Contents with History
-    // Gemini SDK expects roles to be 'user' or 'model'.
-    const contents: any[] = history.map(msg => ({
+    // Filter out initial welcome message if it was generated client-side to ensure proper turn structure
+    // And ensure 'user' starts.
+    const sanitizedHistory = history.filter(msg => msg.id !== 'welcome');
+    
+    // Convert to Gemini format
+    const contents: any[] = sanitizedHistory.map(msg => ({
       role: msg.role,
       parts: [{ text: msg.text }]
     }));
 
-    // Add the current message to the end of contents
+    // Ensure it starts with user if history provided
+    // (Usually handled by UI logic, but here we just append the new message)
+    
+    // Add the current message
     contents.push({
       role: 'user',
       parts: [{ text: userMessage }]
     });
+    
+    // Limit context window to last 20 turns to avoid token limits
+    const limitedContents = contents.slice(-20);
 
     // 4. Call API using lazy client
     const client = await getAiClient();
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: contents,
+      contents: limitedContents,
       config: {
         systemInstruction: systemInstruction,
         temperature: 0.7,

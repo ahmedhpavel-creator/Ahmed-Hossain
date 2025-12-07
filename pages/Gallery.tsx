@@ -11,11 +11,19 @@ const Gallery: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate slight loading delay for smoother UX
-    setTimeout(() => {
-        setImages(storage.getGallery());
-        setLoading(false);
-    }, 300);
+    const loadGallery = async () => {
+        try {
+            const data = await storage.getGallery();
+            if (Array.isArray(data)) {
+                setImages(data);
+            }
+        } catch (e) {
+            console.error("Failed to load gallery", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+    loadGallery();
   }, []);
 
   return (
@@ -39,13 +47,13 @@ const Gallery: React.FC = () => {
                     <div key={img.id} className="group relative aspect-square overflow-hidden rounded-2xl bg-gray-200 dark:bg-gray-800 shadow-md cursor-pointer border border-gray-100 dark:border-gray-800">
                       <img 
                         src={img.imageUrl} 
-                        alt={img.caption[lang]}
+                        alt={img.caption?.[lang] || ''}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => (e.currentTarget.src = 'https://placehold.co/600x600?text=No+Image')}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                         <span className="text-brand-300 text-xs font-bold uppercase tracking-wider mb-1">{img.category}</span>
-                        <p className="text-white text-base font-medium font-bengali translate-y-2 group-hover:translate-y-0 transition-transform duration-300">{img.caption[lang]}</p>
+                        <p className="text-white text-base font-medium font-bengali translate-y-2 group-hover:translate-y-0 transition-transform duration-300">{img.caption?.[lang] || ''}</p>
                       </div>
                       
                       {/* Icon Overlay */}

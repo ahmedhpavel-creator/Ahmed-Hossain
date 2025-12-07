@@ -49,8 +49,8 @@ const ChatBot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const history = messages.map(m => ({ role: m.role, text: m.text }));
-      const responseText = await generateChatResponse(userMsg.text, history);
+      // Pass full messages including id to support filtering in the service
+      const responseText = await generateChatResponse(userMsg.text, messages);
       
       const botMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: responseText };
       setMessages(prev => [...prev, botMsg]);

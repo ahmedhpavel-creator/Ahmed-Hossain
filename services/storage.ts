@@ -1,62 +1,12 @@
 import { Donation, Event, Leader, GalleryItem, Expense, Member, AppSettings } from '../types';
 import { MOCK_LEADERS, ORGANIZATION_INFO } from '../constants';
 
-// --- HELPER FOR HASHING (Same as Admin.tsx to ensure consistency) ---
-const mockHash = (str: string) => {
-  try {
-    return btoa(str).split('').reverse().join('');
-  } catch (e) {
-    return str;
-  }
-};
+const DB_URL = "https://azadi-647ab-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-// Initial Mock Data Seeding - CLEARED DONATIONS
-const SEED_DONATIONS: Donation[] = [];
-
-const SEED_EXPENSES: Expense[] = [
-    { id: 'e1', title: 'Event Banner', description: 'Banner for peace rally', amount: 1200, category: 'Marketing', date: '2023-10-01' }
-];
-
-const SEED_EVENTS: Event[] = [
-    {
-        id: 'ev1',
-        title: { en: 'Free Medical Camp', bn: 'বিনামূল্যে চিকিৎসা ক্যাম্প' },
-        description: { en: 'Free checkups for the poor.', bn: 'দরিদ্রদের জন্য বিনামূল্যে চেকআপ।' },
-        location: 'Sylhet',
-        date: '2023-11-15',
-        image: 'https://picsum.photos/800/400?random=10'
-    }
-];
-
-const SEED_MEMBERS: Member[] = [];
-
-// Seed Gallery with some initial items
-const SEED_GALLERY: GalleryItem[] = [
-    {
-        id: 'g1',
-        imageUrl: 'https://picsum.photos/600/600?random=1',
-        category: 'Social Work',
-        caption: { en: 'Winter Cloth Distribution', bn: 'শীতবস্ত্র বিতরণ' }
-    },
-    {
-        id: 'g2',
-        imageUrl: 'https://picsum.photos/600/600?random=2',
-        category: 'Meetings',
-        caption: { en: 'Annual Committee Meeting', bn: 'বার্ষিক কমিটি সভা' }
-    },
-    {
-        id: 'g3',
-        imageUrl: 'https://picsum.photos/600/600?random=3',
-        category: 'Events',
-        caption: { en: 'Sports Day 2023', bn: 'ক্রীড়া দিবস ২০২৩' }
-    }
-];
-
-// Default Settings Seeding
 const SEED_SETTINGS: AppSettings = {
     contactPhone: ORGANIZATION_INFO.contact.phone,
     adminUser: 'admin',
-    adminPassHash: mockHash('admin123'),
+    adminPassHash: 'MzIxYXNtaW4=', // admin123 hash (base64 reversed)
     socialLinks: {
         facebook: 'https://facebook.com',
         youtube: 'https://youtube.com',
@@ -64,128 +14,101 @@ const SEED_SETTINGS: AppSettings = {
     }
 };
 
-// Helper to simulate DB
-const get = <T>(key: string, seed: T): T => {
-    const data = localStorage.getItem(key);
-    if (!data) {
-        localStorage.setItem(key, JSON.stringify(seed));
-        return seed;
-    }
-    // Deep merge for settings to ensure new fields (like socialLinks) exist if loading old data
-    if (key === 'app_settings') {
-        const parsed = JSON.parse(data);
-        return { ...seed, ...parsed, socialLinks: { ...seed['socialLinks' as keyof T], ...parsed.socialLinks } };
-    }
-    return JSON.parse(data);
-};
+// Helper to handle API requests and Transform Firebase Object to Array
+const api = {
+    get: async <T>(path: string, defaultVal: T): Promise<T> => {
+        try {
+            const res = await fetch(`${DB_URL}/${path}.json`);
+            const data = await res.json();
+            
+            if (!data) return defaultVal;
 
-const set = <T>(key: string, data: T) => {
-    localStorage.setItem(key, JSON.stringify(data));
+            if (Array.isArray(defaultVal)) {
+                // If expected return is array, convert Firebase object (keys as IDs) to array values
+                // Firebase might return an array if keys are sequential integers, otherwise object
+                return (Array.isArray(data) ? data.filter(x => x) : Object.values(data)) as unknown as T;
+            }
+            
+            // For objects (like settings), merge with default to ensure new fields exist
+            if (typeof defaultVal === 'object' && defaultVal !== null) {
+                 return { ...defaultVal, ...data };
+            }
+
+            return data as T;
+        } catch (e) {
+            console.error(`Error fetching ${path}`, e);
+            return defaultVal;
+        }
+    },
+    
+    // We use PUT to save with specific ID to avoid duplicates and maintain control
+    put: async (path: string, data: any) => {
+        await fetch(`${DB_URL}/${path}.json`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' }
+        });
+    },
+
+    // Patch for partial updates
+    patch: async (path: string, data: any) => {
+        await fetch(`${DB_URL}/${path}.json`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' }
+        });
+    },
+
+    delete: async (path: string) => {
+        await fetch(`${DB_URL}/${path}.json`, { method: 'DELETE' });
+    }
 };
 
 export const storage = {
-    // --- SETTINGS MANAGEMENT (Global Phone & Admin Creds) ---
-    getAppSettings: () => get<AppSettings>('app_settings', SEED_SETTINGS),
-    updateAppSettings: (settings: AppSettings) => {
-        set('app_settings', settings);
-    },
+    // --- SETTINGS MANAGEMENT ---
+    getAppSettings: () => api.get<AppSettings>('app_settings', SEED_SETTINGS),
+    updateAppSettings: (settings: AppSettings) => api.put('app_settings', settings),
 
     // --- DONATIONS ---
-    getDonations: () => get<Donation[]>('donations', SEED_DONATIONS),
-    saveDonation: (donation: Donation) => {
-        const list = get<Donation[]>('donations', SEED_DONATIONS);
-        set('donations', [donation, ...list]);
+    getDonations: () => api.get<Donation[]>('donations', []),
+    saveDonation: async (donation: Donation) => {
+        await api.put(`donations/${donation.id}`, donation);
     },
-    updateDonationStatus: (id: string, status: 'approved' | 'rejected') => {
-        const list = get<Donation[]>('donations', SEED_DONATIONS);
-        const updated = list.map(d => d.id === id ? { ...d, status } : d);
-        set('donations', updated);
+    updateDonationStatus: async (id: string, status: 'approved' | 'rejected') => {
+        await api.patch(`donations/${id}`, { status });
     },
-    deleteDonation: (id: string) => {
-        const list = get<Donation[]>('donations', SEED_DONATIONS);
-        set('donations', list.filter(d => d.id !== id));
-    },
+    deleteDonation: (id: string) => api.delete(`donations/${id}`),
     
     // --- EXPENSES ---
-    getExpenses: () => get<Expense[]>('expenses', SEED_EXPENSES),
-    addExpense: (expense: Expense) => {
-        const list = get<Expense[]>('expenses', SEED_EXPENSES);
-        set('expenses', [expense, ...list]);
-    },
-    updateExpense: (expense: Expense) => {
-        const list = get<Expense[]>('expenses', SEED_EXPENSES);
-        const updated = list.map(e => e.id === expense.id ? expense : e);
-        set('expenses', updated);
-    },
-    deleteExpense: (id: string) => {
-        const list = get<Expense[]>('expenses', SEED_EXPENSES);
-        set('expenses', list.filter(e => e.id !== id));
-    },
+    getExpenses: () => api.get<Expense[]>('expenses', []),
+    addExpense: (expense: Expense) => api.put(`expenses/${expense.id}`, expense),
+    updateExpense: (expense: Expense) => api.put(`expenses/${expense.id}`, expense),
+    deleteExpense: (id: string) => api.delete(`expenses/${id}`),
 
     // --- LEADERS ---
-    getLeaders: () => {
-        const leaders = get<Leader[]>('leaders', MOCK_LEADERS);
-        // Fallback merge if local storage has very old/empty data but constants has full list
-        if (leaders.length < 7 && MOCK_LEADERS.length > 10) {
-            return MOCK_LEADERS;
+    getLeaders: async () => {
+        // Fallback to MOCK if DB is empty so the site isn't blank initially
+        const leaders = await api.get<Leader[]>('leaders', []);
+        if (leaders.length === 0 && MOCK_LEADERS.length > 0) {
+             return MOCK_LEADERS;
         }
         return leaders;
     },
-    saveLeader: (leader: Leader) => {
-        const list = get<Leader[]>('leaders', MOCK_LEADERS);
-        // Check if exists (update) or new
-        const exists = list.find(l => l.id === leader.id);
-        if (exists) {
-             set('leaders', list.map(l => l.id === leader.id ? leader : l));
-        } else {
-             set('leaders', [...list, leader]);
-        }
-    },
-    deleteLeader: (id: string) => {
-        const list = get<Leader[]>('leaders', MOCK_LEADERS);
-        set('leaders', list.filter(l => l.id !== id));
-    },
+    saveLeader: (leader: Leader) => api.put(`leaders/${leader.id}`, leader),
+    deleteLeader: (id: string) => api.delete(`leaders/${id}`),
 
     // --- MEMBER MANAGEMENT ---
-    getMembers: () => get<Member[]>('members', SEED_MEMBERS),
-    saveMember: (member: Member) => {
-        const list = get<Member[]>('members', SEED_MEMBERS);
-        const exists = list.find(m => m.id === member.id);
-        if (exists) {
-            set('members', list.map(m => m.id === member.id ? member : m));
-        } else {
-            set('members', [...list, member]);
-        }
-    },
-    deleteMember: (id: string) => {
-        const list = get<Member[]>('members', SEED_MEMBERS);
-        set('members', list.filter(m => m.id !== id));
-    },
+    getMembers: () => api.get<Member[]>('members', []),
+    saveMember: (member: Member) => api.put(`members/${member.id}`, member),
+    deleteMember: (id: string) => api.delete(`members/${id}`),
 
     // --- EVENT MANAGEMENT ---
-    getEvents: () => get<Event[]>('events', SEED_EVENTS),
-    saveEvent: (event: Event) => {
-        const list = get<Event[]>('events', SEED_EVENTS);
-        const exists = list.find(e => e.id === event.id);
-        if (exists) {
-            set('events', list.map(e => e.id === event.id ? event : e));
-        } else {
-            set('events', [event, ...list]); // Add new events to top
-        }
-    },
-    deleteEvent: (id: string) => {
-        const list = get<Event[]>('events', SEED_EVENTS);
-        set('events', list.filter(e => e.id !== id));
-    },
+    getEvents: () => api.get<Event[]>('events', []),
+    saveEvent: (event: Event) => api.put(`events/${event.id}`, event),
+    deleteEvent: (id: string) => api.delete(`events/${id}`),
     
     // --- GALLERY MANAGEMENT ---
-    getGallery: () => get<GalleryItem[]>('gallery', SEED_GALLERY),
-    saveGalleryItem: (item: GalleryItem) => {
-        const list = get<GalleryItem[]>('gallery', SEED_GALLERY);
-        set('gallery', [item, ...list]); // Newest first
-    },
-    deleteGalleryItem: (id: string) => {
-        const list = get<GalleryItem[]>('gallery', SEED_GALLERY);
-        set('gallery', list.filter(g => g.id !== id));
-    },
+    getGallery: () => api.get<GalleryItem[]>('gallery', []),
+    saveGalleryItem: (item: GalleryItem) => api.put(`gallery/${item.id}`, item),
+    deleteGalleryItem: (id: string) => api.delete(`gallery/${id}`),
 };

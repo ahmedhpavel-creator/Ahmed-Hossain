@@ -96,7 +96,56 @@ export const ORGANIZATION_INFO: OrganizationInfo = {
   },
 };
 
-export const MOCK_LEADERS = [];
+export const MOCK_LEADERS = [
+  {
+    id: 'l1',
+    name: { en: 'Md. Abdus Sabir (Tutul)', bn: 'মোঃ আব্দুছ ছাবির (টুটুল)' },
+    designation: { en: 'President', bn: 'সভাপতি' },
+    image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400',
+    message: { en: 'Serving the community is our prime duty.', bn: 'সমাজ সেবা আমাদের প্রধান দায়িত্ব।' },
+    order: 1
+  },
+  {
+    id: 'l2',
+    name: { en: 'Junel Ahmed', bn: 'জুনেল আহমদ' },
+    designation: { en: 'General Secretary', bn: 'সাধারণ সম্পাদক' },
+    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400',
+    message: { en: 'Education is the backbone of a nation.', bn: 'শিক্ষাই জাতির মেরুদণ্ড।' },
+    order: 2
+  },
+  {
+    id: 'l3',
+    name: { en: 'S.S. Nurul Huda Chy (Adv. Shahanur)', bn: 'এস এস নুরুল হুদা চৌঃ (এডঃ শাহানুর)' },
+    designation: { en: 'Vice President', bn: 'সহ-সভাপতি' },
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
+    message: { en: 'Unity is strength.', bn: 'একতাই বল।' },
+    order: 3
+  },
+  {
+    id: 'l4',
+    name: { en: 'Aminur Rahman (Shamim)', bn: 'আমিনুর রহমান (শামীম)' },
+    designation: { en: 'Vice President', bn: 'সহ-সভাপতি' },
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+    message: { en: 'Working for a better tomorrow.', bn: 'সুন্দর আগামীর জন্য কাজ করছি।' },
+    order: 4
+  },
+  {
+    id: 'l5',
+    name: { en: 'Jubed Ahmed', bn: 'জুবেদ আহমদ' },
+    designation: { en: 'Vice President', bn: 'সহ-সভাপতি' },
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
+    message: { en: 'Community first.', bn: 'সমাজ সবার আগে।' },
+    order: 5
+  },
+  {
+    id: 'l6',
+    name: { en: 'Kawsar Ahmed (Pappu)', bn: 'কাওসার আহমদ (পাপ্পু)' },
+    designation: { en: 'Joint General Secretary', bn: 'সহ-সাধারণ সম্পাদক' },
+    image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=400',
+    message: { en: 'Together we succeed.', bn: 'একসাথে আমরা সফল হব।' },
+    order: 6
+  }
+];
 
 export const DICTIONARY: Record<string, LocalizedString> = {
   home: { en: 'Home', bn: 'হোম' },

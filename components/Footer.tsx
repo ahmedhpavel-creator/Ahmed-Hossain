@@ -12,11 +12,14 @@ const Footer: React.FC = () => {
 
   useEffect(() => {
     // Fetch dynamic phone number and social links from storage
-    const settings = storage.getAppSettings();
-    setPhone(settings.contactPhone);
-    if (settings.socialLinks) {
-      setSocialLinks(settings.socialLinks);
-    }
+    const loadSettings = async () => {
+        const settings = await storage.getAppSettings();
+        setPhone(settings.contactPhone);
+        if (settings.socialLinks) {
+          setSocialLinks(settings.socialLinks);
+        }
+    };
+    loadSettings();
   }, []);
 
   return (

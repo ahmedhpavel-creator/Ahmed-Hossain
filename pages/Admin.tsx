@@ -24,8 +24,8 @@ const authService = {
     // Simulate server delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    // FETCH CREDENTIALS FROM STORAGE
-    const settings = storage.getAppSettings();
+    // FETCH CREDENTIALS FROM STORAGE (Async)
+    const settings = await storage.getAppSettings();
     
     if (username.toLowerCase().trim() !== settings.adminUser) return false;
     if (mockHash(pass) !== settings.adminPassHash) return false;
@@ -63,20 +63,38 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }: { isO
 
 // --- SETTINGS COMPONENT ---
 const ManageSettings = () => {
-    const [settings, setSettings] = useState(storage.getAppSettings());
+    const [settings, setSettings] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
-        contactPhone: settings.contactPhone,
-        adminUser: settings.adminUser,
+        contactPhone: '',
+        adminUser: '',
         currentPass: '',
         newPass: '',
         confirmPass: '',
-        facebook: settings.socialLinks?.facebook || '',
-        youtube: settings.socialLinks?.youtube || '',
-        twitter: settings.socialLinks?.twitter || '',
+        facebook: '',
+        youtube: '',
+        twitter: '',
     });
     const [msg, setMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
 
-    const handleGeneralSave = (e: React.FormEvent) => {
+    useEffect(() => {
+        const load = async () => {
+            const data = await storage.getAppSettings();
+            setSettings(data);
+            setFormData(prev => ({
+                ...prev,
+                contactPhone: data.contactPhone,
+                adminUser: data.adminUser,
+                facebook: data.socialLinks?.facebook || '',
+                youtube: data.socialLinks?.youtube || '',
+                twitter: data.socialLinks?.twitter || '',
+            }));
+            setLoading(false);
+        };
+        load();
+    }, []);
+
+    const handleGeneralSave = async (e: React.FormEvent) => {
         e.preventDefault();
         const updated = { 
             ...settings, 
@@ -87,13 +105,13 @@ const ManageSettings = () => {
                 twitter: formData.twitter
             }
         };
-        storage.updateAppSettings(updated);
+        await storage.updateAppSettings(updated);
         setSettings(updated);
         setMsg({ type: 'success', text: 'General & Social Information Updated Successfully!' });
         setTimeout(() => setMsg(null), 3000);
     };
 
-    const handleSecuritySave = (e: React.FormEvent) => {
+    const handleSecuritySave = async (e: React.FormEvent) => {
         e.preventDefault();
         
         // Validation
@@ -115,12 +133,14 @@ const ManageSettings = () => {
             adminUser: formData.adminUser,
             adminPassHash: mockHash(formData.newPass)
         };
-        storage.updateAppSettings(updated);
+        await storage.updateAppSettings(updated);
         setSettings(updated);
         setFormData(prev => ({ ...prev, currentPass: '', newPass: '', confirmPass: '' }));
         setMsg({ type: 'success', text: 'Admin Credentials Updated Successfully!' });
         setTimeout(() => setMsg(null), 3000);
     };
+
+    if (loading) return <div>Loading...</div>;
 
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom-4">
@@ -255,10 +275,11 @@ const ManageGallery = () => {
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
-        setList(storage.getGallery());
+        const load = async () => setList(await storage.getGallery());
+        load();
     }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const newItem: GalleryItem = {
             id: generateId(),
@@ -266,15 +287,15 @@ const ManageGallery = () => {
             category: formData.cat,
             caption: { en: formData.capEn, bn: formData.capBn }
         };
-        storage.saveGalleryItem(newItem);
-        setList(storage.getGallery());
+        await storage.saveGalleryItem(newItem);
+        setList(await storage.getGallery());
         setFormData({ imageUrl: '', cat: 'Events', capEn: '', capBn: '' });
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if(deleteId) {
-            storage.deleteGalleryItem(deleteId);
-            setList(storage.getGallery());
+            await storage.deleteGalleryItem(deleteId);
+            setList(await storage.getGallery());
             setDeleteId(null);
         }
     };
@@ -457,8 +478,11 @@ const DashboardHome = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
-    setDonations(storage.getDonations() || []);
-    setExpenses(storage.getExpenses() || []);
+    const load = async () => {
+        setDonations(await storage.getDonations() || []);
+        setExpenses(await storage.getExpenses() || []);
+    };
+    load();
   }, []);
 
   const totalDonation = donations.filter(d => d.status === 'approved').reduce((acc, curr) => acc + curr.amount, 0);
@@ -503,19 +527,24 @@ const DashboardHome = () => {
 };
 
 const ManageDonations = () => {
-  const [list, setList] = useState<Donation[]>(storage.getDonations());
+  const [list, setList] = useState<Donation[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const handleStatus = (id: string, status: 'approved' | 'rejected') => {
-    storage.updateDonationStatus(id, status);
-    setList(storage.getDonations());
+  useEffect(() => {
+    const load = async () => setList(await storage.getDonations());
+    load();
+  }, []);
+
+  const handleStatus = async (id: string, status: 'approved' | 'rejected') => {
+    await storage.updateDonationStatus(id, status);
+    setList(await storage.getDonations());
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if(deleteId) {
-        storage.deleteDonation(deleteId);
-        setList(storage.getDonations());
+        await storage.deleteDonation(deleteId);
+        setList(await storage.getDonations());
         setDeleteId(null);
     }
   };
@@ -588,10 +617,11 @@ const ManageExpenses = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
-    setList(storage.getExpenses() || []);
+    const load = async () => setList(await storage.getExpenses());
+    load();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newExpense: Expense = {
       id: generateId(),
@@ -601,16 +631,16 @@ const ManageExpenses = () => {
       date: formData.date || new Date().toISOString().split('T')[0],
       description: formData.description
     };
-    storage.addExpense(newExpense);
-    setList(storage.getExpenses());
+    await storage.addExpense(newExpense);
+    setList(await storage.getExpenses());
     setIsModalOpen(false);
     setFormData({ title: '', amount: '', category: '', date: '', description: '' });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteId) {
-      storage.deleteExpense(deleteId);
-      setList(storage.getExpenses());
+      await storage.deleteExpense(deleteId);
+      setList(await storage.getExpenses());
       setDeleteId(null);
     }
   };
@@ -688,7 +718,8 @@ const ManageLeaders = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   useEffect(() => {
-    setList(storage.getLeaders().sort((a, b) => a.order - b.order));
+    const load = async () => setList((await storage.getLeaders()).sort((a, b) => a.order - b.order));
+    load();
   }, []);
 
   const openModal = (leader?: Leader) => {
@@ -708,7 +739,7 @@ const ManageLeaders = () => {
       setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newLeader: Leader = {
        id: editingId || generateId(),
@@ -718,8 +749,8 @@ const ManageLeaders = () => {
        message: { en: formData.msgEn, bn: formData.msgBn },
        order: Number(formData.order) || list.length + 1
     };
-    storage.saveLeader(newLeader);
-    setList(storage.getLeaders().sort((a, b) => a.order - b.order));
+    await storage.saveLeader(newLeader);
+    setList((await storage.getLeaders()).sort((a, b) => a.order - b.order));
     setIsModalOpen(false);
   };
 
@@ -734,10 +765,10 @@ const ManageLeaders = () => {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteId) {
-      storage.deleteLeader(deleteId);
-      setList(storage.getLeaders());
+      await storage.deleteLeader(deleteId);
+      setList(await storage.getLeaders());
       setDeleteId(null);
     }
   };
@@ -759,7 +790,7 @@ const ManageLeaders = () => {
     e.preventDefault(); // Necessary to allow dropping
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLTableRowElement>, targetLeader: Leader) => {
+  const handleDrop = async (e: React.DragEvent<HTMLTableRowElement>, targetLeader: Leader) => {
     e.preventDefault();
     if (!draggedItem || draggedItem.id === targetLeader.id) return;
 
@@ -781,7 +812,9 @@ const ManageLeaders = () => {
     setList(reorderedList);
     
     // Save all updated leaders to storage
-    reorderedList.forEach(l => storage.saveLeader(l));
+    for (const l of reorderedList) {
+        await storage.saveLeader(l);
+    }
   };
 
   return (
@@ -917,7 +950,8 @@ const ManageMembers = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   useEffect(() => {
-    setList(storage.getMembers().sort((a, b) => a.order - b.order));
+    const load = async () => setList((await storage.getMembers()).sort((a, b) => a.order - b.order));
+    load();
   }, []);
 
   const openModal = (member?: Member) => {
@@ -937,7 +971,7 @@ const ManageMembers = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalImage = formData.image || 'https://picsum.photos/200/200';
     const newMember: Member = {
@@ -948,8 +982,8 @@ const ManageMembers = () => {
        message: { en: formData.msgEn, bn: formData.msgBn },
        order: Number(formData.order) || list.length + 1
     };
-    storage.saveMember(newMember);
-    setList(storage.getMembers().sort((a, b) => a.order - b.order));
+    await storage.saveMember(newMember);
+    setList((await storage.getMembers()).sort((a, b) => a.order - b.order));
     setIsModalOpen(false);
   };
 
@@ -964,10 +998,10 @@ const ManageMembers = () => {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
      if(deleteId) {
-        storage.deleteMember(deleteId);
-        setList(storage.getMembers());
+        await storage.deleteMember(deleteId);
+        setList(await storage.getMembers());
         setDeleteId(null);
      }
   };
@@ -1070,7 +1104,8 @@ const ManageEvents = () => {
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
 
   useEffect(() => {
-    setList(storage.getEvents());
+    const load = async () => setList(await storage.getEvents());
+    load();
   }, []);
 
   const openModal = (event?: Event) => {
@@ -1094,7 +1129,7 @@ const ManageEvents = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newEvent: Event = {
       id: editingId || generateId(),
@@ -1104,8 +1139,8 @@ const ManageEvents = () => {
       date: formData.date,
       image: formData.image || 'https://picsum.photos/800/400'
     };
-    storage.saveEvent(newEvent);
-    setList(storage.getEvents());
+    await storage.saveEvent(newEvent);
+    setList(await storage.getEvents());
     setIsModalOpen(false);
   };
 
@@ -1120,10 +1155,10 @@ const ManageEvents = () => {
     }
   };
   
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
       if(deleteId) {
-          storage.deleteEvent(deleteId);
-          setList(storage.getEvents());
+          await storage.deleteEvent(deleteId);
+          setList(await storage.getEvents());
           setDeleteId(null);
       }
   };

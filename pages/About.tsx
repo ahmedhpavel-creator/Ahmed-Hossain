@@ -9,8 +9,11 @@ const About: React.FC = () => {
   const [phone, setPhone] = useState(ORGANIZATION_INFO.contact.phone);
   
   useEffect(() => {
-    const settings = storage.getAppSettings();
-    setPhone(settings.contactPhone);
+    const loadSettings = async () => {
+        const settings = await storage.getAppSettings();
+        setPhone(settings.contactPhone);
+    };
+    loadSettings();
   }, []);
 
   const coreValues = [

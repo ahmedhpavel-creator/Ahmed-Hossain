@@ -24,28 +24,34 @@ const Donation: React.FC = () => {
   const [stats, setStats] = useState({ month: 0, year: 0 });
   const [recentDonations, setRecentDonations] = useState<DonationType[]>([]);
   const [contactPhone, setContactPhone] = useState(ORGANIZATION_INFO.contact.phone);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Calculate public stats & fetch list
-    const donations = storage.getDonations().filter(d => d.status === 'approved');
-    setRecentDonations(donations.slice(0, 10)); // Show last 10 approved donations
+    const fetchData = async () => {
+        // Calculate public stats & fetch list
+        const donationsData = await storage.getDonations();
+        const donations = donationsData.filter(d => d.status === 'approved');
+        setRecentDonations(donations.slice(0, 10)); // Show last 10 approved donations
 
-    const now = new Date();
-    const thisMonth = donations.filter(d => {
-      const dDate = new Date(d.date);
-      return dDate.getMonth() === now.getMonth() && dDate.getFullYear() === now.getFullYear();
-    }).reduce((sum, d) => sum + d.amount, 0);
-    
-    const thisYear = donations.filter(d => {
-      const dDate = new Date(d.date);
-      return dDate.getFullYear() === now.getFullYear();
-    }).reduce((sum, d) => sum + d.amount, 0);
+        const now = new Date();
+        const thisMonth = donations.filter(d => {
+          const dDate = new Date(d.date);
+          return dDate.getMonth() === now.getMonth() && dDate.getFullYear() === now.getFullYear();
+        }).reduce((sum, d) => sum + d.amount, 0);
+        
+        const thisYear = donations.filter(d => {
+          const dDate = new Date(d.date);
+          return dDate.getFullYear() === now.getFullYear();
+        }).reduce((sum, d) => sum + d.amount, 0);
 
-    setStats({ month: thisMonth, year: thisYear });
-    
-    // Fetch dynamic contact phone
-    const settings = storage.getAppSettings();
-    setContactPhone(settings.contactPhone);
+        setStats({ month: thisMonth, year: thisYear });
+        
+        // Fetch dynamic contact phone
+        const settings = await storage.getAppSettings();
+        setContactPhone(settings.contactPhone);
+        setLoading(false);
+    };
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -60,7 +66,7 @@ const Donation: React.FC = () => {
     return 'don_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newDonation: DonationType = {
       id: generateId(),
@@ -74,7 +80,8 @@ const Donation: React.FC = () => {
       date: new Date().toISOString().split('T')[0],
       status: 'pending'
     };
-    storage.saveDonation(newDonation);
+    
+    await storage.saveDonation(newDonation);
     setSubmittedDonation(newDonation);
     window.scrollTo(0,0);
   };
@@ -284,7 +291,7 @@ const Donation: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{TRANSLATIONS.get('thisMonth', lang)}</div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">৳ {stats.month.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{loading ? '...' : `৳ ${stats.month.toLocaleString()}`}</div>
                 </div>
              </div>
              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-brand-100 dark:border-gray-700 flex items-center gap-4 hover:shadow-md transition">
@@ -293,7 +300,7 @@ const Donation: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Total (Year)</div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">৳ {stats.year.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{loading ? '...' : `৳ ${stats.year.toLocaleString()}`}</div>
                 </div>
              </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-brand-100 dark:border-gray-700 flex items-center gap-4 hover:shadow-md transition">
@@ -302,7 +309,7 @@ const Donation: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Send Money To</div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white select-all">{contactPhone}</div>
+                  <div className="text-lg font-bold text-gray-900 dark:text-white select-all">{loading ? 'Loading...' : contactPhone}</div>
                 </div>
              </div>
           </div>
@@ -425,7 +432,7 @@ const Donation: React.FC = () => {
                           Please send Money / Cash In to this official {formData.method} number:
                         </p>
                         <div className="text-xl font-bold text-pink-600 dark:text-pink-400 mt-1 select-all flex items-center gap-2">
-                           {contactPhone}
+                           {loading ? 'Loading...' : contactPhone}
                            <button type="button" onClick={() => navigator.clipboard.writeText(contactPhone)} className="text-xs font-normal bg-white dark:bg-gray-800 border px-2 py-1 rounded text-gray-500 hover:text-gray-800"><Copy size={12}/></button>
                         </div>
                       </div>
@@ -476,7 +483,7 @@ const Donation: React.FC = () => {
                {lang === 'en' ? 'Recent Contributors' : 'সাম্প্রতিক দাতা সদস্যবৃন্দ'}
             </h2>
             
-            {recentDonations.length > 0 ? (
+            {!loading && recentDonations.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recentDonations.map((d) => (
                    <div key={d.id} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 flex justify-between items-center group hover:shadow-md transition">
@@ -500,7 +507,7 @@ const Donation: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-10 text-gray-500">
-                {lang === 'en' ? 'No approved donations yet. Be the first to donate!' : 'এখনও কোন দান অনুমোদিত হয়নি। আপনিই প্রথম দান করুন!'}
+                {loading ? 'Loading...' : (lang === 'en' ? 'No approved donations yet. Be the first to donate!' : 'এখনও কোন দান অনুমোদিত হয়নি। আপনিই প্রথম দান করুন!')}
               </div>
             )}
           </div>

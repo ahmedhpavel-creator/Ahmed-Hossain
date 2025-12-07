@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { storage } from '../services/storage';
 import { TRANSLATIONS } from '../constants';
 import { Quote } from 'lucide-react';
+import { Leader } from '../types';
 
 const Leaders: React.FC = () => {
   const { lang } = useLanguage();
-  const leaders = storage.getLeaders().sort((a, b) => a.order - b.order);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
+
+  useEffect(() => {
+    const fetchLeaders = async () => {
+        try {
+            const data = await storage.getLeaders();
+            if (Array.isArray(data)) {
+                setLeaders(data.sort((a, b) => a.order - b.order));
+            }
+        } catch(e) {
+            console.error("Failed to fetch leaders", e);
+        }
+    };
+    fetchLeaders();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
@@ -34,22 +49,22 @@ const Leaders: React.FC = () => {
               <div className="px-8 pb-8 flex flex-col items-center">
                 {/* Image - Pulled up using negative margin, but kept in flow */}
                 <div className="-mt-14 w-28 h-28 rounded-full border-4 border-white dark:border-gray-900 shadow-lg overflow-hidden bg-gray-200 z-10 shrink-0 mb-5">
-                  <img src={leader.image} alt={leader.name[lang]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={leader.image} alt={leader.name?.[lang] || ''} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 
                 {/* Content - Flows naturally after image */}
                 <div className="text-center w-full flex-1 flex flex-col">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                    {leader.name[lang]}
+                    {leader.name?.[lang] || 'Unknown'}
                   </h2>
                   <p className="text-brand-600 dark:text-brand-400 font-semibold text-sm uppercase tracking-wide mb-6">
-                    {leader.designation[lang]}
+                    {leader.designation?.[lang] || ''}
                   </p>
                   
                   <div className="relative bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl flex-1 flex items-center justify-center">
                     <Quote size={20} className="text-brand-200 dark:text-gray-700 absolute top-2 left-2" />
                     <p className="text-gray-600 dark:text-gray-300 text-sm italic relative z-10 leading-relaxed">
-                      "{leader.message[lang]}"
+                      "{leader.message?.[lang] || ''}"
                     </p>
                   </div>
                 </div>

@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { storage } from '../services/storage';
 import { TRANSLATIONS } from '../constants';
-import { MapPin, Calendar, Clock, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight } from 'lucide-react';
+import { Event } from '../types';
 
 const Events: React.FC = () => {
   const { lang } = useLanguage();
-  const events = storage.getEvents();
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+        try {
+            const data = await storage.getEvents();
+            if(Array.isArray(data)) {
+                setEvents(data);
+            }
+        } catch(e) {
+            console.error("Failed to fetch events", e);
+        }
+    };
+    fetchEvents();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12">
@@ -25,7 +40,7 @@ const Events: React.FC = () => {
               <div key={event.id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row group">
                 <div className="md:w-2/5 h-64 md:h-auto relative overflow-hidden">
                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-                   <img src={event.image} alt={event.title[lang]} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                   <img src={event.image} alt={event.title?.[lang] || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                    
                    {/* Mobile Date Badge */}
                    <div className="absolute top-4 left-4 md:hidden bg-white/95 text-gray-900 rounded-lg p-2 text-center shadow-lg z-20 min-w-[60px]">
@@ -42,7 +57,7 @@ const Events: React.FC = () => {
                    </div>
 
                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 pr-20">
-                    {event.title[lang]}
+                    {event.title?.[lang] || 'Untitled Event'}
                   </h2>
                   
                   <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -51,7 +66,7 @@ const Events: React.FC = () => {
                   </div>
                   
                   <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                    {event.description[lang]}
+                    {event.description?.[lang] || ''}
                   </p>
                   
                   <button className="self-start inline-flex items-center gap-2 text-brand-600 dark:text-brand-400 font-bold hover:gap-3 transition-all">
