@@ -76,6 +76,11 @@ const safeBtoa = (str: string) => {
 export const LOGO_URL = `data:image/svg+xml;base64,${safeBtoa(LOGO_SVG)}`;
 export const CALLIGRAPHY_URL = `data:image/svg+xml;base64,${safeBtoa(CALLIGRAPHY_SVG)}`;
 
+export const ADMIN_CONFIG = {
+  email: 'ahmedhpavel@gmail.com',
+  uid: '45NbTPMy2eMhCtnXEZ5nGBItBfE2'
+};
+
 export const ORGANIZATION_INFO: OrganizationInfo = {
   name: {
     bn: 'আজাদী সমাজ কল্যাণ সংঘ',

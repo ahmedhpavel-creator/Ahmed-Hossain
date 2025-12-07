@@ -9,6 +9,7 @@ export interface AppSettings {
   contactPhone: string;
   adminUser: string;
   adminPassHash: string; // Simple base64 hash for simulation
+  logoUrl?: string;
   socialLinks: {
     facebook: string;
     youtube: string;
@@ -22,6 +23,7 @@ export interface Leader {
   designation: LocalizedString;
   image: string;
   message: LocalizedString;
+  bio?: LocalizedString; // Added bio field
   order: number;
 }
 

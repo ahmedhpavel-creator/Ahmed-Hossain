@@ -40,19 +40,15 @@ const Leaders: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {leaders.map((leader) => (
             <div key={leader.id} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group border border-gray-100 dark:border-gray-800 flex flex-col">
-              {/* Header Banner */}
               <div className="h-32 bg-gradient-to-r from-brand-600 to-brand-400 relative shrink-0">
                 <div className="absolute inset-0 bg-black/10"></div>
               </div>
               
-              {/* Profile Image & Content Container */}
               <div className="px-8 pb-8 flex flex-col items-center">
-                {/* Image - Pulled up using negative margin, but kept in flow */}
                 <div className="-mt-14 w-28 h-28 rounded-full border-4 border-white dark:border-gray-900 shadow-lg overflow-hidden bg-gray-200 z-10 shrink-0 mb-5">
-                  <img src={leader.image} alt={leader.name?.[lang] || ''} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={leader.image} alt={leader.name?.[lang]} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 
-                {/* Content - Flows naturally after image */}
                 <div className="text-center w-full flex-1 flex flex-col">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                     {leader.name?.[lang] || 'Unknown'}
@@ -60,6 +56,12 @@ const Leaders: React.FC = () => {
                   <p className="text-brand-600 dark:text-brand-400 font-semibold text-sm uppercase tracking-wide mb-6">
                     {leader.designation?.[lang] || ''}
                   </p>
+
+                  {leader.bio?.[lang] && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed px-2">
+                        {leader.bio[lang]}
+                    </p>
+                  )}
                   
                   <div className="relative bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl flex-1 flex items-center justify-center">
                     <Quote size={20} className="text-brand-200 dark:text-gray-700 absolute top-2 left-2" />

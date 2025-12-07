@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { TRANSLATIONS, ORGANIZATION_INFO, LOGO_URL, CALLIGRAPHY_URL } from '../constants';
+import { useSettings } from '../contexts/SettingsContext';
+import { TRANSLATIONS, ORGANIZATION_INFO, CALLIGRAPHY_URL } from '../constants';
 import { storage } from '../services/storage';
 import { Donation as DonationType } from '../types';
 import { CheckCircle, Download, Printer, ImageOff, Loader2, CreditCard, User, Phone, Banknote, ShieldCheck, Share2, Copy, Heart, MessageSquare } from 'lucide-react';
 
 const Donation: React.FC = () => {
   const { lang } = useLanguage();
+  const { logo, settings } = useSettings();
+  const contactPhone = settings.contactPhone;
+
   const [formData, setFormData] = useState({
     donorName: '',
     mobile: '',
@@ -23,7 +27,6 @@ const Donation: React.FC = () => {
   // Stats & List
   const [stats, setStats] = useState({ month: 0, year: 0 });
   const [recentDonations, setRecentDonations] = useState<DonationType[]>([]);
-  const [contactPhone, setContactPhone] = useState(ORGANIZATION_INFO.contact.phone);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,10 +48,6 @@ const Donation: React.FC = () => {
         }).reduce((sum, d) => sum + d.amount, 0);
 
         setStats({ month: thisMonth, year: thisYear });
-        
-        // Fetch dynamic contact phone
-        const settings = await storage.getAppSettings();
-        setContactPhone(settings.contactPhone);
         setLoading(false);
     };
     fetchData();
@@ -148,31 +147,31 @@ const Donation: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12 flex flex-col items-center justify-center p-4">
         {/* Receipt Container - Simulate Paper */}
-        <div id="receipt" className="bg-[#fffdf8] p-10 rounded-none shadow-2xl w-full max-w-2xl border border-gray-200 print-only-container relative overflow-hidden text-gray-800">
+        <div id="receipt" className="bg-[#fffdf8] p-6 sm:p-10 rounded-none shadow-2xl w-full max-w-2xl border border-gray-200 print-only-container relative overflow-hidden text-gray-800">
            {/* Decorative Top Border */}
            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400"></div>
            
            {/* Watermark */}
            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.04] z-0">
-             <img src={LOGO_URL} className="w-[80%] h-[80%] object-contain grayscale" alt="" />
+             <img src={logo} className="w-[80%] h-[80%] object-contain grayscale" alt="" />
            </div>
 
           <div className="relative z-10">
-            <div className="flex justify-between items-start border-b-2 border-brand-100 pb-6 mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start border-b-2 border-brand-100 pb-6 mb-8 gap-4">
                <div className="flex items-center gap-4">
                    {!imgError ? (
-                     <img src={LOGO_URL} alt="Logo" className="w-20 h-20 object-contain" onError={() => setImgError(true)} />
+                     <img src={logo} alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" onError={() => setImgError(true)} />
                    ) : (
-                      <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center"><ImageOff size={24} className="text-gray-400" /></div>
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center"><ImageOff size={24} className="text-gray-400" /></div>
                    )}
                    <div>
-                      <h1 className="text-2xl font-bold uppercase text-brand-800 tracking-tight">{ORGANIZATION_INFO.name.en}</h1>
-                      <h2 className="text-lg font-bold font-bengali text-gray-600">{ORGANIZATION_INFO.name.bn}</h2>
+                      <h1 className="text-xl sm:text-2xl font-bold uppercase text-brand-800 tracking-tight">{ORGANIZATION_INFO.name.en}</h1>
+                      <h2 className="text-base sm:text-lg font-bold font-bengali text-gray-600">{ORGANIZATION_INFO.name.bn}</h2>
                       <p className="text-xs text-gray-500 mt-1">{ORGANIZATION_INFO.address}</p>
                    </div>
                </div>
-               <div className="text-right">
-                 <div className="text-3xl font-bold text-gray-200 select-none">RECEIPT</div>
+               <div className="text-left sm:text-right w-full sm:w-auto">
+                 <div className="text-2xl sm:text-3xl font-bold text-gray-200 select-none">RECEIPT</div>
                  <div className="text-sm font-bold text-brand-600 mt-1">#{submittedDonation.id.substring(0, 8).toUpperCase()}</div>
                </div>
             </div>
@@ -180,7 +179,7 @@ const Donation: React.FC = () => {
             <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
                <div>
                  <p className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-1">Donor Details</p>
-                 <p className="font-bold text-lg text-gray-900">{submittedDonation.isAnonymous ? 'Anonymous Donor' : submittedDonation.donorName}</p>
+                 <p className="font-bold text-lg text-gray-900 break-words">{submittedDonation.isAnonymous ? 'Anonymous Donor' : submittedDonation.donorName}</p>
                  {!submittedDonation.isAnonymous && <p className="text-gray-600">{submittedDonation.mobile}</p>}
                </div>
                <div className="text-right">

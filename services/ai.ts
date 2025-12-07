@@ -1,3 +1,4 @@
+
 import { ORGANIZATION_INFO } from "../constants";
 import { storage } from "./storage";
 import { Event } from "../types";
@@ -38,10 +39,10 @@ export const generateChatResponse = async (userMessage: string, history: {id?: s
     const contactPhone = settings.contactPhone;
     
     const leaders = await storage.getLeaders();
-    const leaderNames = leaders.map(l => `${l.name.en} (${l.designation.en})`).join(', ');
+    const leaderNames = leaders.map(l => `${l.name?.en || 'Unknown'} (${l.designation?.en || ''})`).join(', ');
     
     const events = await storage.getEvents();
-    const eventList = events.slice(0, 3).map(e => `${e.title.en} on ${e.date}`).join('; ');
+    const eventList = events.slice(0, 3).map(e => `${e.title?.en || 'Event'} on ${e.date}`).join('; ');
     
     const contactInfoFull = `Phone: ${contactPhone}, Email: ${ORGANIZATION_INFO.contact.email}, Address: ${ORGANIZATION_INFO.address}`;
     const donationInfo = `We accept donations via Bkash, Nagad, and Cash. The official number is ${contactPhone}. We can also generate receipts immediately.`;
@@ -123,10 +124,10 @@ export const generateEventSummary = async (event: Event) => {
       Create a short, engaging summary for the following event, suitable for a social media post or a news snippet.
       
       Details:
-      Title: ${event.title.en} (${event.title.bn})
+      Title: ${event.title?.en} (${event.title?.bn})
       Date: ${event.date}
       Location: ${event.location}
-      Description: ${event.description.en}
+      Description: ${event.description?.en}
       
       Please provide two versions:
       1. English Summary

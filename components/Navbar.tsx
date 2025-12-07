@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { TRANSLATIONS } from '../constants';
 import { Menu, X, Moon, Sun } from 'lucide-react';
-import { ORGANIZATION_INFO, LOGO_URL } from '../constants';
+import { ORGANIZATION_INFO } from '../constants';
 
 interface NavbarProps {
   toggleTheme: () => void;
@@ -12,6 +13,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ toggleTheme, darkMode }) => {
   const { lang, setLang } = useLanguage();
+  const { logo } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -45,16 +47,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleTheme, darkMode }) => {
       <div className="container mx-auto px-4 lg:px-8 py-2 flex justify-between items-center">
         {/* Brand Logo & Name */}
         <Link to="/" className="flex items-center gap-3 group" onClick={closeMenu}>
-           {/* Official Logo restored here */}
-           <div className="h-12 w-12 flex items-center justify-center overflow-hidden bg-white rounded-full shadow-sm p-1">
+           <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 flex items-center justify-center overflow-hidden bg-white rounded-full shadow-lg ring-2 ring-gray-100 dark:ring-gray-700 p-1 relative z-10 transition-transform group-hover:scale-105">
              <img 
-               src={LOGO_URL} 
+               src={logo} 
                alt="Logo" 
                className="h-full w-full object-contain"
              />
            </div>
           <div className="flex flex-col border-l-2 border-brand-200 dark:border-brand-800 pl-3">
-             <span className="font-bold text-sm md:text-lg leading-tight text-gray-900 dark:text-white font-bengali tracking-wide">
+             <span className="font-bold text-sm md:text-lg leading-tight text-gray-900 dark:text-white font-bengali tracking-wide line-clamp-1">
                {ORGANIZATION_INFO.name[lang]}
              </span>
              <span className="text-[10px] md:text-xs text-brand-600 dark:text-brand-400 font-medium tracking-wider hidden sm:block">
