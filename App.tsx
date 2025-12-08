@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 // Lazy Load Pages for Performance Optimization
 const Home = lazy(() => import('./pages/Home'));
 const Leaders = lazy(() => import('./pages/Leaders'));
+const Members = lazy(() => import('./pages/Members'));
 const Events = lazy(() => import('./pages/Events'));
 const Gallery = lazy(() => import('./pages/Gallery'));
 const Donation = lazy(() => import('./pages/Donation'));
@@ -73,6 +74,7 @@ const App: React.FC = () => {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/leaders" element={<Leaders />} />
+                  <Route path="/members" element={<Members />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/donate" element={<Donation />} />

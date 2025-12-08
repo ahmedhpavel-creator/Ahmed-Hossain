@@ -40,7 +40,15 @@ const local = {
         } catch { return defaultVal; }
     },
     set: (key: string, data: any) => {
-        localStorage.setItem(key, JSON.stringify(data));
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (e: any) {
+            console.error("Local Storage Error", e);
+            // Handle QuotaExceededError
+            if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                 alert("Local Storage is full! Please delete some images or data from the admin panel to continue saving changes.");
+            }
+        }
     },
     updateItem: (collectionKey: string, id: string, data: any, merge = false) => {
         const list = local.get<any[]>(collectionKey, []);

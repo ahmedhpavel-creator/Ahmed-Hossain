@@ -30,6 +30,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleTheme, darkMode }) => {
   const navLinks = [
     { path: '/', label: TRANSLATIONS.get('home', lang) },
     { path: '/leaders', label: TRANSLATIONS.get('leaders', lang) },
+    { path: '/members', label: TRANSLATIONS.get('members', lang) },
     { path: '/events', label: TRANSLATIONS.get('events', lang) },
     { path: '/gallery', label: TRANSLATIONS.get('gallery', lang) },
     { path: '/about', label: TRANSLATIONS.get('about', lang) },

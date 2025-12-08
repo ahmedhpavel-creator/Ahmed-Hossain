@@ -21,6 +21,7 @@ const getApiKey = () => {
 const getAiClient = async () => {
   if (!aiClient) {
     const apiKey = getApiKey();
+    if (!apiKey) return null; // Handle missing key gracefully
     // Dynamic import to prevent top-level process access issues in browser
     const { GoogleGenAI } = await import("@google/genai");
     aiClient = new GoogleGenAI({ apiKey });
@@ -76,7 +77,8 @@ export const generateChatResponse = async (userMessage: string, history: {id?: s
     // 3. Prepare Contents with History
     // Filter out initial welcome message if it was generated client-side to ensure proper turn structure
     // And ensure 'user' starts.
-    const sanitizedHistory = history.filter(msg => msg.id !== 'welcome');
+    const safeHistory = Array.isArray(history) ? history : [];
+    const sanitizedHistory = safeHistory.filter(msg => msg.id !== 'welcome' && msg.text && msg.role);
     
     // Convert to Gemini format
     const contents: any[] = sanitizedHistory.map(msg => ({
@@ -84,9 +86,6 @@ export const generateChatResponse = async (userMessage: string, history: {id?: s
       parts: [{ text: msg.text }]
     }));
 
-    // Ensure it starts with user if history provided
-    // (Usually handled by UI logic, but here we just append the new message)
-    
     // Add the current message
     contents.push({
       role: 'user',
@@ -98,6 +97,8 @@ export const generateChatResponse = async (userMessage: string, history: {id?: s
 
     // 4. Call API using lazy client
     const client = await getAiClient();
+    if (!client) return "Service not configured properly (Missing API Key).";
+
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: limitedContents,
@@ -137,6 +138,8 @@ export const generateEventSummary = async (event: Event) => {
     `;
 
     const client = await getAiClient();
+    if (!client) return "API Key missing.";
+    
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,

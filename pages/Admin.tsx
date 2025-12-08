@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { storage } from '../services/storage';
@@ -9,6 +10,42 @@ import { useSettings } from '../contexts/SettingsContext';
 
 // --- HELPER FOR ID ---
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+
+// --- HELPER FOR IMAGE COMPRESSION ---
+const compressImage = (file: File, maxWidth = 600, quality = 0.7): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxWidth) {
+                        width *= maxWidth / height;
+                        height = maxWidth;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+};
 
 declare const firebase: any;
 
@@ -34,29 +71,6 @@ const useAuth = () => {
     }, []);
 
     return { user, loading };
-};
-
-// --- HELPER COMPONENTS ---
-
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; title: string; message: string; }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mb-4 border-4 border-red-50 dark:border-red-900/10">
-                <Trash2 size={28} />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{message}</p>
-        </div>
-        <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancel</button>
-            <button onClick={() => { onConfirm(); onClose(); }} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-500/30 transition">Delete</button>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 // --- SETTINGS COMPONENT ---
@@ -100,51 +114,16 @@ const ManageSettings = () => {
         setTesting(false);
     };
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         
-        // Strict size check before processing (2MB)
-        if (file.size > 2 * 1024 * 1024) { 
-            notify('error', "File is too large. Please upload an image smaller than 2MB.");
-            return;
+        try {
+            const compressed = await compressImage(file, 200, 0.8);
+            setLogoPreview(compressed);
+        } catch(e) {
+            notify('error', "Failed to process image.");
         }
-
-        const reader = new FileReader();
-        reader.onload = (readerEvent) => {
-            const image = new Image();
-            image.onload = () => {
-                // Resize image to max 200x200 for logo to save space and prevent errors
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 200;
-                const MAX_HEIGHT = 200;
-                let width = image.width;
-                let height = image.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(image, 0, 0, width, height);
-                
-                // Get compressed base64
-                const dataUrl = canvas.toDataURL('image/png', 0.8);
-                setLogoPreview(dataUrl);
-            };
-            image.src = readerEvent.target?.result as string;
-        };
-        reader.readAsDataURL(file);
     };
 
     const handleGeneralSave = async (e: React.FormEvent) => {
@@ -709,15 +688,13 @@ const ManageLeaders = () => {
 
     useEffect(() => { load(); }, []);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 800 * 1024) { notify('error', "Image too large (max 800KB)"); return; }
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            setForm(prev => ({ ...prev, image: re.target?.result as string }));
-        };
-        reader.readAsDataURL(file);
+        try {
+            const compressed = await compressImage(file, 600, 0.7);
+            setForm(prev => ({ ...prev, image: compressed }));
+        } catch(e) { notify('error', "Image processing failed"); }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -814,15 +791,14 @@ const ManageMembers = () => {
 
     useEffect(() => { load(); }, []);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 800 * 1024) { notify('error', "Image too large (max 800KB)"); return; }
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            setForm(prev => ({ ...prev, image: re.target?.result as string }));
-        };
-        reader.readAsDataURL(file);
+        try {
+            // Optimized for members: Max width 300px, 60% quality (avatars don't need high res)
+            const compressed = await compressImage(file, 300, 0.6);
+            setForm(prev => ({ ...prev, image: compressed }));
+        } catch(e) { notify('error', "Image processing failed"); }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -877,19 +853,37 @@ const ManageMembers = () => {
                     </div>
                 </form>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {members.map(m => (
-                    <div key={m.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700 text-center">
-                        <img src={m.image} className="w-20 h-20 rounded-full mx-auto mb-2 object-cover bg-gray-100" />
-                        <h4 className="font-bold text-sm dark:text-white">{m.name?.en}</h4>
-                        <p className="text-xs text-brand-600">{m.designation?.en}</p>
-                        <div className="flex justify-center gap-2 mt-2">
-                            <button onClick={() => {setForm(m); setIsEditing(true); window.scrollTo(0,0);}} className="text-blue-500 text-xs">Edit</button>
-                            <button onClick={() => handleDelete(m.id)} className="text-red-500 text-xs">Delete</button>
+                    <div key={m.id} className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-xl shadow-sm border dark:border-gray-700 text-center flex flex-col items-center relative group hover:shadow-md transition-shadow">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mb-3 overflow-hidden bg-gray-100 dark:bg-gray-700 ring-2 ring-gray-50 dark:ring-gray-800 shrink-0">
+                             <img src={m.image} className="w-full h-full object-cover" loading="lazy" alt={m.name?.en} />
+                        </div>
+                        <h4 className="font-bold text-xs sm:text-sm dark:text-white w-full truncate px-1" title={m.name?.en}>{m.name?.en || 'Unnamed'}</h4>
+                        <p className="text-[10px] sm:text-xs text-brand-600 dark:text-brand-400 w-full truncate mb-3 px-1" title={m.designation?.en}>{m.designation?.en || 'Member'}</p>
+                        
+                        <div className="flex items-center justify-center gap-1 w-full pt-2 border-t border-gray-100 dark:border-gray-700 mt-auto">
+                            <button 
+                                onClick={() => {setForm(m); setIsEditing(true); window.scrollTo(0,0);}} 
+                                className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex-1"
+                            >
+                                Edit
+                            </button>
+                            <div className="w-px h-3 bg-gray-200 dark:bg-gray-700"></div>
+                            <button 
+                                onClick={() => handleDelete(m.id)} 
+                                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex-1"
+                            >
+                                Delete
+                            </button>
                         </div>
                     </div>
                 ))}
             </div>
+            {members.length === 0 && (
+                <div className="text-center py-10 text-gray-400 text-sm">No members found. Add one above.</div>
+            )}
         </div>
     );
 };
@@ -909,15 +903,13 @@ const ManageEvents = () => {
 
     useEffect(() => { load(); }, []);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 800 * 1024) { notify('error', "Image too large (max 800KB)"); return; }
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            setForm(prev => ({ ...prev, image: re.target?.result as string }));
-        };
-        reader.readAsDataURL(file);
+        try {
+            const compressed = await compressImage(file, 600, 0.7);
+            setForm(prev => ({ ...prev, image: compressed }));
+        } catch(e) { notify('error', "Image processing failed"); }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -1028,15 +1020,14 @@ const ManageGallery = () => {
 
     useEffect(() => { load(); }, []);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 800 * 1024) { notify('error', "Image too large (max 800KB)"); return; }
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            setForm(prev => ({ ...prev, imageUrl: re.target?.result as string }));
-        };
-        reader.readAsDataURL(file);
+        try {
+            // Gallery images can be slightly larger for quality
+            const compressed = await compressImage(file, 800, 0.7);
+            setForm(prev => ({ ...prev, imageUrl: compressed }));
+        } catch(e) { notify('error', "Image processing failed"); }
     };
 
     const handleSave = async (e: React.FormEvent) => {

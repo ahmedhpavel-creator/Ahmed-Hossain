@@ -155,6 +155,7 @@ export const MOCK_LEADERS = [
 export const DICTIONARY: Record<string, LocalizedString> = {
   home: { en: 'Home', bn: 'হোম' },
   leaders: { en: 'Leaders', bn: 'নেতৃবৃন্দ' },
+  members: { en: 'Members', bn: 'সদস্যবৃন্দ' }, // Added Members translation
   events: { en: 'Events', bn: 'ইভেন্ট' },
   gallery: { en: 'Gallery', bn: 'গ্যালারি' },
   about: { en: 'About Us', bn: 'আমাদের সম্পর্কে' },
