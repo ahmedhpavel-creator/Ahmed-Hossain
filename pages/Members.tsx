@@ -46,37 +46,35 @@ const Members: React.FC = () => {
              </div>
         ) : (
             <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {members.map((member) => (
-                    <div key={member.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 md:p-6 shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center hover:-translate-y-2">
-                      
-                      {/* Circular Image Container with Hover Effect */}
-                      <div className="relative w-24 h-24 md:w-32 md:h-32 mb-4 md:mb-5">
-                        {/* Animated Border Ring */}
-                        <div className="absolute inset-0 rounded-full border-4 border-gray-100 dark:border-gray-800 group-hover:border-brand-500/30 group-hover:scale-105 transition-all duration-300 z-10 pointer-events-none"></div>
-                        
-                        {/* Image Wrapper */}
-                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-inner relative z-0">
+                    <div 
+                      key={member.id} 
+                      className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 group border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center hover:-translate-y-1"
+                    >
+                      {/* Image Container with subtle ring on hover */}
+                      <div className="w-24 h-24 md:w-28 md:h-28 mb-4 rounded-full p-1 border-2 border-transparent group-hover:border-brand-500/20 transition-colors duration-300">
+                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-inner">
                             {member.image ? (
                                 <img 
                                     src={member.image} 
                                     alt={member.name?.[lang]} 
                                     loading="lazy" 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" 
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-800">
-                                    <User className="w-10 h-10 md:w-12 md:h-12" />
+                                <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
+                                    <User className="w-10 h-10" />
                                 </div>
                             )}
                         </div>
                       </div>
                       
                       <div className="w-full space-y-1">
-                        <h2 className="text-sm md:text-lg font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                        <h2 className="text-sm md:text-base font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                           {member.name?.[lang] || 'Unknown'}
                         </h2>
-                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider group-hover:text-brand-500 transition-colors line-clamp-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider line-clamp-2">
                           {member.designation?.[lang] || ''}
                         </p>
                       </div>

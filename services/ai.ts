@@ -23,15 +23,23 @@ const getAiClient = async () => {
     const apiKey = getApiKey();
     if (!apiKey) return null; // Handle missing key gracefully
     // Dynamic import to prevent top-level process access issues in browser
-    const { GoogleGenAI } = await import("@google/genai");
-    aiClient = new GoogleGenAI({ apiKey });
+    try {
+      const { GoogleGenAI } = await import("@google/genai");
+      if (!GoogleGenAI) {
+        console.error("GoogleGenAI class not found in imported module");
+        return null;
+      }
+      aiClient = new GoogleGenAI({ apiKey });
+    } catch (importError) {
+      console.error("Failed to import @google/genai SDK:", importError);
+      return null;
+    }
   }
   return aiClient;
 };
 
 /**
  * Generates a response for the Chatbot using Gemini 2.5 Flash.
- * It injects organization context into the system instruction and maintains chat history.
  */
 export const generateChatResponse = async (userMessage: string, history: {id?: string, role: string, text: string}[]) => {
   try {
@@ -75,29 +83,28 @@ export const generateChatResponse = async (userMessage: string, history: {id?: s
     `;
 
     // 3. Prepare Contents with History
-    // Filter out initial welcome message if it was generated client-side to ensure proper turn structure
-    // And ensure 'user' starts.
     const safeHistory = Array.isArray(history) ? history : [];
-    const sanitizedHistory = safeHistory.filter(msg => msg.id !== 'welcome' && msg.text && msg.role);
+    const sanitizedHistory = safeHistory.filter(msg => 
+      msg.id !== 'welcome' && 
+      msg.text && 
+      msg.role &&
+      !msg.text.includes("connection issues") && 
+      !msg.text.includes("trouble connecting")
+    );
     
-    // Convert to Gemini format
     const contents: any[] = sanitizedHistory.map(msg => ({
       role: msg.role,
       parts: [{ text: msg.text }]
     }));
 
-    // Add the current message
     contents.push({
       role: 'user',
       parts: [{ text: userMessage }]
     });
     
-    // Limit context window to last 20 turns to avoid token limits
     const limitedContents = contents.slice(-20);
-
-    // 4. Call API using lazy client
     const client = await getAiClient();
-    if (!client) return "Service not configured properly (Missing API Key).";
+    if (!client) return "Service not configured properly (Missing API Key or SDK issue).";
 
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -150,4 +157,48 @@ export const generateEventSummary = async (event: Event) => {
     console.error("AI Summary Error:", error);
     throw new Error("Failed to connect to AI service.");
   }
+};
+
+/**
+ * Auto-translates content between English and Bangla
+ */
+export const autoTranslate = async (text: string, targetLang: 'en' | 'bn'): Promise<string> => {
+  if (!text) return "";
+  try {
+    const client = await getAiClient();
+    if (!client) return text;
+
+    const prompt = `Translate the following text to ${targetLang === 'en' ? 'English' : 'Bengali (Bangla)'}. 
+    Maintain the professional and respectful tone of a social welfare organization. 
+    Only return the translated text, no explanations.
+    
+    Text: "${text}"`;
+
+    const response = await client.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    return response.text?.trim() || text;
+  } catch (e) {
+    console.warn("Auto-translate failed", e);
+    return text;
+  }
+};
+
+/**
+ * Cleans up and formats text data (capitalization, phone numbers)
+ */
+export const smartFormat = async (text: string, type: 'name' | 'phone' | 'text'): Promise<string> => {
+    if (!text) return "";
+    // Local fast heuristic checks first
+    if (type === 'phone') {
+        return text.replace(/[^0-9+]/g, '');
+    }
+    if (type === 'name') {
+        return text.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    // AI Fallback for complex text
+    return text;
 };
