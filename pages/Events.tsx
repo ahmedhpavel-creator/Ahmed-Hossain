@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { storage } from '../services/storage';
@@ -37,24 +38,33 @@ const Events: React.FC = () => {
             const month = dateObj.toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short' });
             
             return (
-              <div key={event.id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row group">
+              <div key={event.id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row group cursor-pointer">
                 <div className="md:w-2/5 h-64 md:h-auto relative overflow-hidden">
-                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-                   <img src={event.image} alt={event.title?.[lang]} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                   {/* Overlay: Fades out on hover to brighten image */}
+                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
                    
-                   <div className="absolute top-4 left-4 md:hidden bg-white/95 text-gray-900 rounded-lg p-2 text-center shadow-lg z-20 min-w-[60px]">
+                   {/* Image: Smooth zoom and slight rotation */}
+                   <img 
+                     src={event.image} 
+                     alt={event.title?.[lang]} 
+                     loading="lazy" 
+                     className="w-full h-full object-cover transform group-hover:scale-110 group-hover:rotate-1 transition-transform duration-700 ease-in-out" 
+                   />
+                   
+                   {/* Mobile Date Badge */}
+                   <div className="absolute top-4 left-4 md:hidden bg-white/95 text-gray-900 rounded-lg p-2 text-center shadow-lg z-20 min-w-[60px] backdrop-blur-sm">
                       <span className="block text-xs font-bold uppercase text-gray-500">{month}</span>
                       <span className="block text-xl font-bold text-brand-600">{day}</span>
                    </div>
                 </div>
                 
                 <div className="p-6 md:p-8 md:w-3/5 flex flex-col justify-center relative">
-                   <div className="hidden md:block absolute top-8 right-8 bg-brand-50 dark:bg-gray-800 text-brand-700 dark:text-brand-400 rounded-xl p-3 text-center border border-brand-100 dark:border-gray-700 min-w-[70px]">
+                   <div className="hidden md:block absolute top-8 right-8 bg-brand-50 dark:bg-gray-800 text-brand-700 dark:text-brand-400 rounded-xl p-3 text-center border border-brand-100 dark:border-gray-700 min-w-[70px] shadow-sm group-hover:shadow-md transition-shadow">
                       <span className="block text-sm font-bold uppercase tracking-wider opacity-70">{month}</span>
                       <span className="block text-2xl font-bold">{day}</span>
                    </div>
 
-                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 pr-20">
+                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 pr-20 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                     {event.title?.[lang] || 'Untitled'}
                   </h2>
                   
@@ -63,9 +73,13 @@ const Events: React.FC = () => {
                     <span className="flex items-center gap-1.5"><MapPin size={16} className="text-brand-500" /> {event.location}</span>
                   </div>
                   
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6 line-clamp-3">
                     {event.description?.[lang] || ''}
                   </p>
+                  
+                  <div className="flex items-center text-brand-600 font-bold text-sm uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-4 group-hover:translate-x-0">
+                    {lang === 'en' ? 'View Details' : 'বিস্তারিত দেখুন'} <ArrowRight size={16} className="ml-2" />
+                  </div>
                 </div>
               </div>
             );

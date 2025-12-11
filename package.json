@@ -1,3 +1,4 @@
+
 {
   "name": "azadi-social-welfare",
   "version": "1.0.0",
@@ -8,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "*",
+    "@google/genai": "^0.2.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "lucide-react": "^0.363.0",

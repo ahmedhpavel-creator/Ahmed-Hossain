@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { ORGANIZATION_INFO } from "../constants";
 import { storage } from "./storage";
@@ -5,8 +6,9 @@ import { Event } from "../types";
 
 const getApiKey = () => {
   try {
+    // Check both standard Vite env and process.env shim
     // @ts-ignore
-    return process.env.API_KEY || "";
+    return import.meta.env?.VITE_API_KEY || process.env.API_KEY || "";
   } catch (e) {
     return "";
   }
@@ -19,7 +21,7 @@ const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
  * Generates a response for the Chatbot using Gemini 3 Pro Preview.
  */
 export const generateChatResponse = async (userMessage: string, history: {id?: string, role: string, text: string}[]) => {
-  if (!ai) return "I am currently unavailable due to system configuration (API Key missing). Please contact the office directly.";
+  if (!ai) return "I am currently unavailable due to system configuration. Please contact the office directly.";
 
   try {
     // 1. Gather Context

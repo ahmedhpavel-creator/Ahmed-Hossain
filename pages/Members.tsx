@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { storage } from '../services/storage';
@@ -50,7 +51,7 @@ const Members: React.FC = () => {
                   {members.map((member) => (
                     <div 
                       key={member.id} 
-                      className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 group border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center hover:-translate-y-1"
+                      className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-brand-200 dark:hover:border-brand-800 transition-all duration-300 group border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center hover:-translate-y-2"
                     >
                       {/* Image Container with subtle ring on hover */}
                       <div className="w-24 h-24 md:w-28 md:h-28 mb-4 rounded-full p-1 border-2 border-transparent group-hover:border-brand-500/20 transition-colors duration-300">

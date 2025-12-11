@@ -3,111 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Azadi Social Welfare Organization</title>
+    <title>Azadi Social Welfare Organization | Unity & Service</title>
+    <meta name="description" content="Azadi Social Welfare Organization - Serving Sylhet since 1988 through Education, Unity, Peace, Service, and Sports. Donate today to make a difference.">
+    <meta name="keywords" content="NGO, Sylhet, Charity, Azadi, Social Welfare, Donation, Bangladesh, Education, Volunteer, Non-profit">
+    <meta name="author" content="Azadi Organization">
+    <meta name="robots" content="index, follow">
     
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Azadi Social Welfare Organization">
+    <meta property="og:description" content="Unity • Education • Peace • Service • Sports. Serving humanity in Sylhet, Bangladesh since 1988.">
+    <meta property="og:image" content="./logo.svg">
+
     <!-- PWA Settings -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#064e3b">
-    <link rel="icon" type="image/svg+xml" href="/logo.svg">
-    <link rel="apple-touch-icon" href="/logo.svg">
+    <link rel="icon" type="image/svg+xml" href="./logo.svg">
+    <link rel="apple-touch-icon" href="./logo.svg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Azadi">
 
     <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Safety Shim for process.env in Sandbox Mode -->
     <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'Noto Sans Bengali', 'sans-serif'],
-              bengali: ['Noto Sans Bengali', 'sans-serif'],
-              arabic: ['Amiri', 'serif'],
-              serif: ['Cinzel', 'serif'], // Added for headings
-            },
-            colors: {
-              brand: {
-                50: '#f2fcf5',
-                100: '#e1f8e8',
-                200: '#c3eed3',
-                300: '#94debb',
-                400: '#5bc59e',
-                500: '#34a882',
-                600: '#268768',
-                700: '#206d55',
-                800: '#064e3b', // Deep Emerald
-                900: '#063f31',
-                950: '#022c22',
-              },
-              gold: {
-                50: '#fffbeb',
-                100: '#fef3c7',
-                200: '#fde68a',
-                300: '#fcd34d',
-                400: '#fbbf24',
-                500: '#f59e0b', // Primary Gold
-                600: '#d97706',
-                700: '#b45309',
-                800: '#92400e',
-                900: '#78350f',
-              }
-            },
-            backgroundImage: {
-              'islamic-pattern': "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23064e3b' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-            }
-          }
-        }
-      }
+      window.process = window.process || { env: {} };
     </script>
-    
-    <style>
-      body {
-        background-color: #fdfbf7; /* Creamy White */
-      }
-      .dark body {
-        background-color: #022c22; /* Very Dark Emerald */
-      }
-      
-      @media print {
-        .no-print { display: none !important; }
-        .print-only { display: block !important; }
-        body { background: white !important; }
-      }
-      .print-only { display: none; }
 
-      ::-webkit-scrollbar { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: #064e3b; }
-      .dark ::-webkit-scrollbar-thumb { background: #1f2937; }
-    </style>
-  <script type="importmap">
+    <!-- Import Map for CDN dependencies that aren't bundled -->
+    <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
-    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.4",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^0.2.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.6",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "path": "https://aistudiocdn.com/path@^0.12.7"
+    "react": "https://aistudiocdn.com/react@18.3.1",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@18.3.1/client",
+    "react-dom": "https://aistudiocdn.com/react-dom@18.3.1",
+    "react/": "https://aistudiocdn.com/react@18.3.1/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@6.22.3",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@0.363.0",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@1.4.1",
+    "jspdf": "https://aistudiocdn.com/jspdf@3.0.4",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@0.2.1",
+    "vite": "https://aistudiocdn.com/vite@5.2.0",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@4.2.1",
+    "path": "https://aistudiocdn.com/path@0.12.7",
+    "clsx": "https://aistudiocdn.com/clsx@2.1.0",
+    "tailwind-merge": "https://aistudiocdn.com/tailwind-merge@2.2.2",
+    "recharts": "https://aistudiocdn.com/recharts@2.12.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.2/"
   }
 }
 </script>
-</head>
+  </head>
   <body class="text-gray-900 dark:text-gray-100 transition-colors duration-500 antialiased selection:bg-brand-500 selection:text-white">
     <div id="root"></div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Kept via CDN as per project architecture) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -123,8 +77,12 @@
         appId: "1:1008629471474:web:b89ca0c34bbf81d1aa986b",
         measurementId: "G-H5WS4TL392"
       };
-      firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
+      // Initialize Firebase only if SDK loaded successfully
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+      } else {
+        console.error("Firebase SDK failed to load");
+      }
     </script>
 
     <script type="module" src="/index.tsx"></script>
