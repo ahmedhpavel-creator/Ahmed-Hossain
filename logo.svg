@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <circle cx="250" cy="250" r="245" fill="#064e3b" />
+  <circle cx="250" cy="250" r="200" fill="white" />
+  <circle cx="250" cy="250" r="140" fill="#047857" stroke="#facc15" stroke-width="4"/>
+  <circle cx="250" cy="210" r="60" fill="#dc2626" />
+  <g transform="translate(250, 240) scale(1.1)">
+     <path d="M0,-50 Q15,-20 0,0 Q-15,-20 0,-50 Z" fill="white" />
+     <path d="M0,0 Q20,-15 35,-35 Q25,-5 0,10 Z" fill="white" />
+     <path d="M0,0 Q-20,-15 -35,-35 Q-25,-5 0,10 Z" fill="white" />
+     <path d="M-40,15 Q0,40 40,15 L40,25 Q0,50 -40,25 Z" fill="#10b981" />
+  </g>
+  <path d="M190,320 Q250,340 310,320 L310,340 Q250,360 190,340 Z" fill="white" />
+  <path d="M250,330 L250,350" stroke="#047857" stroke-width="2"/>
+  <path d="M120,380 Q250,450 380,380 L380,420 Q250,490 120,420 Z" fill="#b91c1c" stroke="white" stroke-width="2"/>
+  <text x="250" y="415" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="22" fill="white" letter-spacing="2">ESTD • 1988</text>
+  <g fill="#facc15">
+     <polygon points="250,60 256,78 275,78 260,89 266,107 250,95 234,107 240,89 225,78 244,78" transform="translate(0, -10) scale(0.6)"/>
+     <circle cx="100" cy="250" r="8" />
+     <circle cx="400" cy="250" r="8" />
+  </g>
+</svg>
