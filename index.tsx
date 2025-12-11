@@ -1,9 +1,9 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-// Styles are now handled via build process for production
-import './index.css';
+import App from './App.tsx';
+
+// Styles are now handled via index.html and Tailwind CDN
+// import './index.css'; 
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

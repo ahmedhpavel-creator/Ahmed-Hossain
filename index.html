@@ -4,68 +4,103 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Azadi Social Welfare Organization | Unity & Service</title>
-    <meta name="description" content="Azadi Social Welfare Organization - Serving Sylhet since 1988 through Education, Unity, Peace, Service, and Sports. Donate today to make a difference.">
-    <meta name="keywords" content="NGO, Sylhet, Charity, Azadi, Social Welfare, Donation, Bangladesh, Education, Volunteer, Non-profit">
-    <meta name="author" content="Azadi Organization">
-    <meta name="robots" content="index, follow">
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Azadi Social Welfare Organization">
-    <meta property="og:description" content="Unity • Education • Peace • Service • Sports. Serving humanity in Sylhet, Bangladesh since 1988.">
-    <meta property="og:image" content="./logo.svg">
-
-    <!-- PWA Settings -->
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#064e3b">
-    <link rel="icon" type="image/svg+xml" href="./logo.svg">
-    <link rel="apple-touch-icon" href="./logo.svg">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Azadi">
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Safety Shim for process.env in Sandbox Mode -->
+    <!-- Safety Shim for process.env -->
     <script>
-      window.process = window.process || { env: {} };
+      window.process = window.process || { env: { NODE_ENV: 'development' } };
     </script>
 
-    <!-- Import Map for CDN dependencies that aren't bundled -->
+    <!-- Tailwind CSS for Runtime Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'Noto Sans Bengali', 'sans-serif'],
+              bengali: ['Noto Sans Bengali', 'sans-serif'],
+              arabic: ['Amiri', 'serif'],
+            },
+            colors: {
+              brand: {
+                50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7',
+                400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+                800: '#065f46', 900: '#064e3b', 950: '#022c22',
+              },
+              gold: {
+                 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
+                 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309'
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Custom Styles (Inlined from index.css) -->
+    <style type="text/tailwindcss">
+      @layer base {
+        body {
+          @apply bg-brand-50/50 dark:bg-gray-950;
+        }
+      }
+      .calligraphy-path {
+        fill: transparent;
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: draw 3s ease-in-out forwards, fillIn 1s ease-in-out 2.5s forwards;
+      }
+      @keyframes draw { to { stroke-dashoffset: 0; } }
+      @keyframes fillIn { to { fill: currentColor; } }
+      .bg-pattern {
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23064e3b' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      .dark .bg-pattern {
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { background: white !important; }
+      }
+      .print-only { display: none; }
+    </style>
+
+    <!-- Import Map -->
     <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@18.3.1",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@18.3.1/client",
-    "react-dom": "https://aistudiocdn.com/react-dom@18.3.1",
-    "react/": "https://aistudiocdn.com/react@18.3.1/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@6.22.3",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@0.363.0",
-    "html2canvas": "https://aistudiocdn.com/html2canvas@1.4.1",
-    "jspdf": "https://aistudiocdn.com/jspdf@3.0.4",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@0.2.1",
-    "vite": "https://aistudiocdn.com/vite@5.2.0",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@4.2.1",
-    "path": "https://aistudiocdn.com/path@0.12.7",
-    "clsx": "https://aistudiocdn.com/clsx@2.1.0",
-    "tailwind-merge": "https://aistudiocdn.com/tailwind-merge@2.2.2",
-    "recharts": "https://aistudiocdn.com/recharts@2.12.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.2/"
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?external=react,react-dom",
+    "lucide-react": "https://esm.sh/lucide-react@0.363.0?external=react,react-dom",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "@google/genai": "https://esm.sh/@google/genai@0.2.1",
+    "clsx": "https://esm.sh/clsx@2.1.0",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.2",
+    "recharts": "https://esm.sh/recharts@2.12.3?external=react,react-dom",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.2/",
+    "react/": "https://esm.sh/react@^19.2.2/",
+    "vite": "https://esm.sh/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "path": "https://esm.sh/path@^0.12.7"
   }
 }
 </script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   </head>
-  <body class="text-gray-900 dark:text-gray-100 transition-colors duration-500 antialiased selection:bg-brand-500 selection:text-white">
+  <body class="text-gray-900 dark:text-gray-100 antialiased selection:bg-brand-500 selection:text-white">
     <div id="root"></div>
 
-    <!-- Firebase SDKs (Kept via CDN as per project architecture) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <script>
       const firebaseConfig = {
         apiKey: "AIzaSyDvGZNBEtyCpbBcfHOzjvzvkvhWC7rabY0",
@@ -77,12 +112,7 @@
         appId: "1:1008629471474:web:b89ca0c34bbf81d1aa986b",
         measurementId: "G-H5WS4TL392"
       };
-      // Initialize Firebase only if SDK loaded successfully
-      if (typeof firebase !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
-      } else {
-        console.error("Firebase SDK failed to load");
-      }
+      if (typeof firebase !== 'undefined') firebase.initializeApp(firebaseConfig);
     </script>
 
     <script type="module" src="/index.tsx"></script>
