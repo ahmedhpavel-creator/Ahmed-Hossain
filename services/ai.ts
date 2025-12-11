@@ -1,124 +1,96 @@
-
+import { GoogleGenAI } from "@google/genai";
 import { ORGANIZATION_INFO } from "../constants";
 import { storage } from "./storage";
 import { Event } from "../types";
 
-// Lazy initialization holder
-let aiClient: any | null = null;
-
 const getApiKey = () => {
   try {
-    // In Vite production build, process.env.API_KEY is replaced with the actual string value.
-    // We access it directly, bypassing strict 'typeof process' checks that fail in browser.
     // @ts-ignore
     return process.env.API_KEY || "";
   } catch (e) {
-    console.warn("Unable to access API_KEY");
     return "";
   }
 };
 
-const getAiClient = async () => {
-  if (!aiClient) {
-    const apiKey = getApiKey();
-    if (!apiKey) return null; // Handle missing key gracefully
-    // Dynamic import to prevent top-level process access issues in browser
-    try {
-      const { GoogleGenAI } = await import("@google/genai");
-      if (!GoogleGenAI) {
-        console.error("GoogleGenAI class not found in imported module");
-        return null;
-      }
-      aiClient = new GoogleGenAI({ apiKey });
-    } catch (importError) {
-      console.error("Failed to import @google/genai SDK:", importError);
-      return null;
-    }
-  }
-  return aiClient;
-};
+const apiKey = getApiKey();
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**
- * Generates a response for the Chatbot using Gemini 2.5 Flash.
+ * Generates a response for the Chatbot using Gemini 3 Pro Preview.
  */
 export const generateChatResponse = async (userMessage: string, history: {id?: string, role: string, text: string}[]) => {
+  if (!ai) return "I am currently unavailable due to system configuration (API Key missing). Please contact the office directly.";
+
   try {
-    // 1. Gather Context (Async now)
+    // 1. Gather Context
     const settings = await storage.getAppSettings(); 
     const contactPhone = settings.contactPhone;
     
     const leaders = await storage.getLeaders();
-    const leaderNames = leaders.map(l => `${l.name?.en || 'Unknown'} (${l.designation?.en || ''})`).join(', ');
+    const leaderContext = leaders
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 5) // Top 5 leaders
+      .map(l => `${l.name?.en} (${l.designation?.en})`)
+      .join(', ');
     
     const events = await storage.getEvents();
-    const eventList = events.slice(0, 3).map(e => `${e.title?.en || 'Event'} on ${e.date}`).join('; ');
+    const eventContext = events
+      .slice(0, 3)
+      .map(e => `${e.title?.en} on ${e.date}`)
+      .join('; ');
     
-    const contactInfoFull = `Phone: ${contactPhone}, Email: ${ORGANIZATION_INFO.contact.email}, Address: ${ORGANIZATION_INFO.address}`;
-    const donationInfo = `We accept donations via Bkash, Nagad, and Cash. The official number is ${contactPhone}. We can also generate receipts immediately.`;
+    const contactInfo = `Phone: ${contactPhone}, Email: ${ORGANIZATION_INFO.contact.email}, Address: ${ORGANIZATION_INFO.address}`;
 
-    // 2. Construct System Instruction
+    // 2. System Instruction for Azadi Support
     const systemInstruction = `
-      You are a helpful, warm, and polite AI assistant for the "${ORGANIZATION_INFO.name.en}" (also known as ${ORGANIZATION_INFO.name.bn}).
+      You are "Azadi Support", the dedicated AI assistant for "${ORGANIZATION_INFO.name.en}" (${ORGANIZATION_INFO.name.bn}).
+      Your mission is to assist members, donors, and the community with information about our social welfare activities, events, and donation process.
+
+      **Organization Info:**
+      - Established: ${ORGANIZATION_INFO.estDate.en}
+      - Slogan: ${ORGANIZATION_INFO.slogan.en}
+      - Contact: ${contactInfo}
+      - Key Leaders: ${leaderContext}
+      - Recent Events: ${eventContext || "Check our events page for updates."}
+
+      **Guidelines:**
+      1. **Islamic Etiquette:** Start conversations with "Assalamu Alaikum" and maintain a respectful, humble tone (Adab). Use phrases like "InshaAllah" for future hopes and "JazakAllah Khair" for thanks.
+      2. **Donations:** If asked about donating, warmly encourage it as a noble deed (Sadaqah). Provide the contact number (${contactPhone}) for Bkash/Nagad/Cash details.
+      3. **Language:** Respond in the language the user uses (English or Bangla).
+      4. **Scope:** Answer questions strictly related to the organization's welfare activities (Education, Unity, Peace, Service, Sports). If unsure, kindly ask them to call the office.
       
-      Your goal is to answer visitor questions accurately based on the following context:
-      - **Mission:** ${ORGANIZATION_INFO.slogan.en}
-      - **Established:** ${ORGANIZATION_INFO.estDate.en}
-      - **Contact:** ${contactInfoFull}
-      - **Key Leaders:** ${leaderNames}
-      - **Upcoming/Recent Events:** ${eventList || "No recent events listed."}
-      - **Donation:** ${donationInfo}
-      
-      Guidelines:
-      - **Islamic Etiquette:** You must strictly follow Islamic etiquette in your conversation.
-      - **Greeting:** Always start or respond with "Assalamu Alaikum" (আসসালামু আলাইকুম) or "Walaikum Assalam" (ওয়ালাইকুম আসসালাম) as appropriate. Never use "Namaskar" or secular greetings like "Hi/Hello" without the Islamic greeting first.
-      - **Tone:** Be very polite, humble, and respectful (Marjoniya/Adab).
-      - **Terminology:** Use Islamic phrases naturally where appropriate, such as:
-        - "InshaAllah" (when referring to future events).
-        - "MashAllah" (when praising or acknowledging good things).
-        - "JazakAllah Khair" (instead of just thanks).
-        - "Alhamdulillah" (when acknowledging success or well-being).
-      - If the user asks in Bengali, reply in Bengali. If in English, reply in English.
-      - If you don't know the answer, politely ask them to contact the organization directly.
-      - Emphasize that donations are for social welfare and helping the poor.
+      **Persona:** Helpful, warm, professional, and spiritually conscious.
     `;
 
-    // 3. Prepare Contents with History
+    // 3. Prepare History
     const safeHistory = Array.isArray(history) ? history : [];
-    const sanitizedHistory = safeHistory.filter(msg => 
-      msg.id !== 'welcome' && 
-      msg.text && 
-      msg.role &&
-      !msg.text.includes("connection issues") && 
-      !msg.text.includes("trouble connecting")
-    );
-    
-    const contents: any[] = sanitizedHistory.map(msg => ({
-      role: msg.role,
-      parts: [{ text: msg.text }]
-    }));
+    // Filter out internal/system messages or connection errors from history context
+    const conversationHistory = safeHistory
+      .filter(msg => msg.id !== 'welcome' && msg.role && msg.text && !msg.text.includes("unavailable"))
+      .map(msg => ({
+        role: msg.role === 'model' ? 'model' : 'user',
+        parts: [{ text: msg.text }]
+      }));
 
-    contents.push({
-      role: 'user',
-      parts: [{ text: userMessage }]
-    });
-    
-    const limitedContents = contents.slice(-20);
-    const client = await getAiClient();
-    if (!client) return "Service not configured properly (Missing API Key or SDK issue).";
+    // Add current message
+    const contents = [
+      ...conversationHistory.slice(-10), // Limit context window
+      { role: 'user', parts: [{ text: userMessage }] }
+    ];
 
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: limitedContents,
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: contents,
       config: {
         systemInstruction: systemInstruction,
         temperature: 0.7,
       },
     });
 
-    return response.text || "I'm sorry, I couldn't generate a response at the moment.";
+    return response.text || "I apologize, I could not generate a response.";
   } catch (error) {
     console.error("AI Service Error:", error);
-    return "I am currently experiencing some connection issues. Please try again later.";
+    return "I am currently experiencing connection difficulties. Please try again in a moment.";
   }
 };
 
@@ -126,36 +98,28 @@ export const generateChatResponse = async (userMessage: string, history: {id?: s
  * Generates a social media summary for an event.
  */
 export const generateEventSummary = async (event: Event) => {
+  if (!ai) return "AI Service Unavailable";
+
   try {
     const prompt = `
-      You are a social media manager for the "Azadi Social Welfare Organization".
-      Create a short, engaging summary for the following event, suitable for a social media post or a news snippet.
+      As the social media manager for Azadi Social Welfare Organization, write a compelling post for this event:
       
-      Details:
-      Title: ${event.title?.en} (${event.title?.bn})
+      Title: ${event.title?.en}
       Date: ${event.date}
-      Location: ${event.location}
-      Description: ${event.description?.en}
+      Details: ${event.description?.en}
       
-      Please provide two versions:
-      1. English Summary
-      2. Bengali Summary (বাংলা সারসংক্ষেপ)
-      
-      Keep it professional yet inviting. Include appropriate emojis. Use Islamic greetings where appropriate.
+      Output: Provide an English version and a Bangla version suitable for Facebook. Use emojis.
     `;
 
-    const client = await getAiClient();
-    if (!client) return "API Key missing.";
-    
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
       contents: prompt,
     });
 
-    return response.text || "Could not generate summary.";
+    return response.text || "Summary generation failed.";
   } catch (error) {
-    console.error("AI Summary Error:", error);
-    throw new Error("Failed to connect to AI service.");
+    console.error("Summary Error:", error);
+    return "Failed to generate summary.";
   }
 };
 
@@ -163,42 +127,25 @@ export const generateEventSummary = async (event: Event) => {
  * Auto-translates content between English and Bangla
  */
 export const autoTranslate = async (text: string, targetLang: 'en' | 'bn'): Promise<string> => {
-  if (!text) return "";
+  if (!text || !ai) return text;
+  
   try {
-    const client = await getAiClient();
-    if (!client) return text;
+    const prompt = `Translate this text to ${targetLang === 'en' ? 'English' : 'Bengali'}. Keep the tone respectful and accurate. Text: "${text}"`;
 
-    const prompt = `Translate the following text to ${targetLang === 'en' ? 'English' : 'Bengali (Bangla)'}. 
-    Maintain the professional and respectful tone of a social welfare organization. 
-    Only return the translated text, no explanations.
-    
-    Text: "${text}"`;
-
-    const response = await client.models.generateContent({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
 
     return response.text?.trim() || text;
   } catch (e) {
-    console.warn("Auto-translate failed", e);
     return text;
   }
 };
 
-/**
- * Cleans up and formats text data (capitalization, phone numbers)
- */
 export const smartFormat = async (text: string, type: 'name' | 'phone' | 'text'): Promise<string> => {
     if (!text) return "";
-    // Local fast heuristic checks first
-    if (type === 'phone') {
-        return text.replace(/[^0-9+]/g, '');
-    }
-    if (type === 'name') {
-        return text.replace(/\b\w/g, c => c.toUpperCase());
-    }
-
-    // AI Fallback for complex text
+    if (type === 'phone') return text.replace(/[^0-9+]/g, '');
+    if (type === 'name') return text.replace(/\b\w/g, c => c.toUpperCase());
     return text;
 };

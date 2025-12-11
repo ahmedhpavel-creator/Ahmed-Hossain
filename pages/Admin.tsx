@@ -152,7 +152,8 @@ const SidebarLink = ({ to, icon: Icon, label, active }: any) => (
 
 // 3. Layout Component
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { lang, setLang, user, isMobileMenuOpen, toggleMobileMenu } = useAdmin();
+    const { lang, setLang, isMobileMenuOpen, toggleMobileMenu } = useAdmin();
+    const { user } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
     const { logo } = useSettings();
